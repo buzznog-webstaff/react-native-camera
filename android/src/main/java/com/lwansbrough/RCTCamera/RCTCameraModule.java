@@ -6,6 +6,7 @@
 package com.lwansbrough.RCTCamera;
 
 import android.content.ContentValues;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -637,6 +638,9 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
 
     @ReactMethod
     public void addFilterImageOverlayOnBaseImage(final String baseImageURI, final String filterImageURI, final Promise promise) {
+
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
         File baseImgFile = new  File(baseImageURI.replace("file://", ""));
 
         Bitmap baseImageBitmap = null, filterImageBitmap = null;
@@ -658,15 +662,21 @@ public class RCTCameraModule extends ReactContextBaseJavaModule
             canvas.drawBitmap(baseImageBitmap, new Matrix(), null);
             canvas.drawBitmap(getResizedBitmap(filterImageBitmap, baseImageBitmap.getWidth(), baseImageBitmap.getHeight()), 0, 0, null);
 
-            String filename = "merged.png";
-            File sd = Environment.getExternalStorageDirectory();
+            String filename = timeStamp + "IMG.jpg";
+            File sd = new File (Environment.getExternalStorageDirectory() + "/Buzznog");
+
+            if (!sd.exists()) {
+                File imageDirectory = new File("/sdcard/Buzznog/");
+                imageDirectory.mkdirs();
+            }
             File dest = new File(sd, filename);
 
             try {
                 FileOutputStream out = new FileOutputStream(dest);
-                bmOverlay.compress(Bitmap.CompressFormat.PNG, 50, out);
+                bmOverlay.compress(Bitmap.CompressFormat.JPEG, 50, out);
                 out.flush();
                 out.close();
+                getReactApplicationContext().sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dest)));
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
